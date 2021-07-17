@@ -19,7 +19,7 @@
                 {
                         "label": "Rebuild Linux x86_64",
                         "type": "shell",
-                        "command": "rm -rf build && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug && make -j12",
+                        "command": "rm bin/* && rm -rf build && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Debug && make -j12",
                         "group": {
                                 "kind": "build",
                                 "isDefault": true

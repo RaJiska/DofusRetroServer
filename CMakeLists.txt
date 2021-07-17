@@ -36,7 +36,10 @@ IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clan
 ENDIF()
 
 ### Linking
+add_subdirectory(lib/spdlog)
+
 add_executable(${BINARY_NAME} ${HDRS} ${SRCS})
+target_link_libraries(${BINARY_NAME} spdlog)
 
 set_target_properties(${BINARY_NAME} PROPERTIES
 	CXX_STANDARD 20
