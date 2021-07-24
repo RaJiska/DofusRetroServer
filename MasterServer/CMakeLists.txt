@@ -13,16 +13,21 @@ SET(LIBRARY_OUTPUT_PATH ${BIN_DIR})
 ### Sources & Flags
 SET (HDRS
 	"${INCLUDE_DIR}/MasterServer.hpp"
+	"${INCLUDE_DIR}/Client.hpp"
 )
 
 SET (SRCS
 	"${SOURCE_DIR}/main.cpp"
 	"${SOURCE_DIR}/MasterServer.cpp"
+	"${SOURCE_DIR}/Client.cpp"
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
-# CFlags for G++ or Clang
+### Packages
+find_package(Boost)
+
+### CFlags for G++ or Clang
 IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Winit-self \
 		-Wwrite-strings -Wcast-align -Wredundant-decls -Wfloat-equal \
