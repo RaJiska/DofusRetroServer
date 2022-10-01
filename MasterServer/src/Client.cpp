@@ -63,11 +63,21 @@ void Client::handleRead(const boost::system::error_code &error, std::size_t len)
 		this->end();
 }
 
-void Client::sendMessage(std::string const &message)
+void Client::sendMessage(const std::string &message)
 {
-	boost::asio::post([this, message]() {
+    bool isWriteInProgress = !this->messages.empty();
+    this->messages.push_back(message);
+    if (!isWriteInProgress)
+    {
+      this->startWrite();
+    }
+}
+
+void Client::startWrite()
+{
+	boost::asio::post([this]() {
 		boost::asio::async_write(this->socket,
-			boost::asio::buffer(message, message.size()),
+			boost::asio::buffer(this->messages.front(), this->messages.front().size()),
 			boost::asio::transfer_at_least(1),
 			boost::bind(
 				&Client::handleWrite,
@@ -83,6 +93,10 @@ void Client::handleWrite(const boost::system::error_code &error, std::size_t len
 {
 	if (!error && len > 0) {
 		spdlog::info("Sent Msg to ID {0}: {1} bytes", this->id, len);
+		this->messages.pop_front();
+		if (!this->messages.empty()) {
+			startWrite();
+		}
 	} else {
 		spdlog::error("Error sending message to {0}", this->id);
 		this->end();

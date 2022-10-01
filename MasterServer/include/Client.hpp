@@ -2,6 +2,7 @@
 
 #include <boost/asio.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <deque>
 
 class Client
 {
@@ -13,11 +14,12 @@ class Client
 	virtual void end();
 
 	virtual boost::asio::ip::tcp::socket &getSocket() noexcept;
+	void sendMessage(std::string const &message);
 
 	private:
 	void startRead();
 	void handleRead(const boost::system::error_code &error, std::size_t len);
-	void sendMessage(std::string const& message);
+	void startWrite();
 	void handleWrite(const boost::system::error_code &error, std::size_t len);
 
 	static const unsigned int BUFFER_SIZE = 256;
@@ -26,4 +28,5 @@ class Client
 	boost::asio::io_service &ioService;
 	boost::asio::ip::tcp::socket socket;
 	unsigned char buffer[Client::BUFFER_SIZE - 1];
+	std::deque<std::string> messages;
 };
