@@ -17,6 +17,8 @@ class Client
 	private:
 	void startRead();
 	void handleRead(const boost::system::error_code &error, std::size_t len);
+	void sendMessage(std::string const& message);
+	void handleWrite(const boost::system::error_code &error, std::size_t len);
 
 	static const unsigned int BUFFER_SIZE = 256;
 

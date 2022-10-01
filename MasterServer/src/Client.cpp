@@ -62,3 +62,29 @@ void Client::handleRead(const boost::system::error_code &error, std::size_t len)
 	else
 		this->end();
 }
+
+void Client::sendMessage(std::string const &message)
+{
+	boost::asio::post([this, message]() {
+		boost::asio::async_write(this->socket,
+			boost::asio::buffer(message, message.size()),
+			boost::asio::transfer_at_least(1),
+			boost::bind(
+				&Client::handleWrite,
+				this,
+				boost::asio::placeholders::error,
+				boost::asio::placeholders::bytes_transferred
+			)
+		);
+	});
+}
+
+void Client::handleWrite(const boost::system::error_code &error, std::size_t len)
+{
+	if (!error && len > 0) {
+		spdlog::info("Sent Msg to ID {0}: {1} bytes", this->id, len);
+	} else {
+		spdlog::error("Error sending message to {0}", this->id);
+		this->end();
+	}
+}
