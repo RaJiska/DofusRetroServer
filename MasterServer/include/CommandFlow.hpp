@@ -12,18 +12,22 @@ class CommandFlow
 	typedef enum FlowState
 	{
 		VERSION,
-		CREDENTIALS,
+		END
 	} FlowState;
 	typedef std::unique_ptr<ICommand> CommandPtr;
 
 
-	CommandFlow();
+	CommandFlow(FlowState flowState = FlowState::VERSION);
 	virtual ~CommandFlow() = default;
 
-	std::unique_ptr<ICommand> command;
+	CommandPtr retrieveCommand();
+	FlowState advanceFlow();
+
+	FlowState getFlowState() const noexcept;
 
 	private:
-	FlowState flowState = FlowState::VERSION;
+	FlowState flowState;
+	
 	std::unordered_map<
 		FlowState,
 		std::function<CommandPtr(void)>

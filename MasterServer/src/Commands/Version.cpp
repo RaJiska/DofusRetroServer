@@ -9,12 +9,13 @@ Command::Version::Version(void) : ACommand()
 
 void Command::Version::processMessage(const NetworkMessage &message)
 {
-
+	
 }
 
-void Command::Version::processCommand(void) noexcept
+ICommand::CommandState Command::Version::advanceStep(void) noexcept
 {
-
+	this->commandState = ICommand::CommandState::END;
+	return this->commandState;
 }
 
 bool Command::Version::commandComplete(void) const noexcept

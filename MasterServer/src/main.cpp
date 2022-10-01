@@ -5,12 +5,17 @@
 #include "MasterServer.hpp"
 #include "spdlog/spdlog.h"
 
+#include "CommandFlow.hpp"
+
 int main(int argc, char * const *argv)
 {
-	return 0;
+#ifdef DEBUG
+	spdlog::set_level(spdlog::level::debug);
+#endif
+	std::list<boost::shared_ptr<MasterServer>> msList;
+
 	try {
 		boost::asio::io_service ioService;
-		std::list<boost::shared_ptr<MasterServer>> msList;
 
 		boost::shared_ptr<MasterServer> ms(new MasterServer(ioService, 1111));
 		msList.push_back(ms);

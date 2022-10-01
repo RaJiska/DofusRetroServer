@@ -3,6 +3,7 @@
 #include <boost/asio.hpp>
 
 #include "Client.hpp"
+#include "Backend.hpp"
 
 class MasterServer
 {
@@ -17,4 +18,5 @@ class MasterServer
 	boost::asio::io_service &ioService;
 	boost::asio::ip::tcp::acceptor acceptor;
 	boost::asio::ip::tcp::socket socket;
+	Backend backend;
 };

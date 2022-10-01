@@ -5,11 +5,12 @@
 #include <deque>
 
 #include "CommandFlow.hpp"
+#include "Backend.hpp"
 
 class Client
 {
 	public:
-	Client(unsigned long long int id, boost::asio::io_service &ioService);
+	Client(unsigned long long int id, boost::asio::io_service &ioService, Backend &backend);
 	virtual ~Client() = default;
 
 	virtual void start();
@@ -23,13 +24,17 @@ class Client
 	void sendMessage(const std::string &message);
 	void startWrite();
 	void handleWrite(const boost::system::error_code &error, std::size_t len);
+	bool processCommand();
+	CommandFlow::FlowState updateCommandFlow(bool force = false);
 
 	static const unsigned int BUFFER_SIZE = 256;
 
 	unsigned long long int id;
 	boost::asio::io_service &ioService;
 	boost::asio::ip::tcp::socket socket;
+	Backend &backend;
 	unsigned char buffer[Client::BUFFER_SIZE - 1];
 	std::deque<std::string> messages;
 	CommandFlow commandFlow;
+	std::unique_ptr<ICommand> currentCommand = commandFlow.retrieveCommand();
 };

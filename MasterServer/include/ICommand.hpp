@@ -1,6 +1,7 @@
 #pragma once
 
 #include "NetworkMessage.hpp"
+#include "Exceptions/CommandException.hpp"
 
 class ICommand
 {
@@ -15,7 +16,7 @@ class ICommand
 	virtual ~ICommand() {}
 
 	virtual void processMessage(const NetworkMessage &message) = 0;
-	virtual void processCommand(void) = 0;
+	virtual CommandState advanceStep(void) = 0;
 	virtual bool commandComplete(void) const noexcept = 0;
 
 	virtual CommandState getCommandState(void) const noexcept = 0;
