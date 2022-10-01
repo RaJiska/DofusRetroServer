@@ -14,11 +14,11 @@ class Client
 	virtual void end();
 
 	virtual boost::asio::ip::tcp::socket &getSocket() noexcept;
-	void sendMessage(std::string const &message);
 
 	private:
 	void startRead();
 	void handleRead(const boost::system::error_code &error, std::size_t len);
+	void sendMessage(const std::string &message);
 	void startWrite();
 	void handleWrite(const boost::system::error_code &error, std::size_t len);
 

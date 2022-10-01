@@ -78,7 +78,6 @@ void Client::startWrite()
 	boost::asio::post([this]() {
 		boost::asio::async_write(this->socket,
 			boost::asio::buffer(this->messages.front(), this->messages.front().size()),
-			boost::asio::transfer_at_least(1),
 			boost::bind(
 				&Client::handleWrite,
 				this,
