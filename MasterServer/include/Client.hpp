@@ -4,6 +4,8 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <deque>
 
+#include "CommandFlow.hpp"
+
 class Client
 {
 	public:
@@ -29,4 +31,5 @@ class Client
 	boost::asio::ip::tcp::socket socket;
 	unsigned char buffer[Client::BUFFER_SIZE - 1];
 	std::deque<std::string> messages;
+	CommandFlow commandFlow;
 };

@@ -7,6 +7,7 @@
 
 int main(int argc, char * const *argv)
 {
+	return 0;
 	try {
 		boost::asio::io_service ioService;
 		std::list<boost::shared_ptr<MasterServer>> msList;

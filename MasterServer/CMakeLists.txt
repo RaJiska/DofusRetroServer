@@ -14,12 +14,21 @@ SET(LIBRARY_OUTPUT_PATH ${BIN_DIR})
 SET (HDRS
 	"${INCLUDE_DIR}/MasterServer.hpp"
 	"${INCLUDE_DIR}/Client.hpp"
+	"${INCLUDE_DIR}/NetworkMessage.hpp"
+	"${INCLUDE_DIR}/CommandFlow.hpp"
+	"${INCLUDE_DIR}/ICommand.hpp"
+	"${INCLUDE_DIR}/ACommand.hpp"
+	"${INCLUDE_DIR}/Commands/Version.hpp"
 )
 
 SET (SRCS
 	"${SOURCE_DIR}/main.cpp"
 	"${SOURCE_DIR}/MasterServer.cpp"
 	"${SOURCE_DIR}/Client.cpp"
+	"${SOURCE_DIR}/NetworkMessage.cpp"
+	"${SOURCE_DIR}/CommandFlow.cpp"
+	"${SOURCE_DIR}/ACommand.cpp"
+	"${SOURCE_DIR}/Commands/Version.cpp"
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
