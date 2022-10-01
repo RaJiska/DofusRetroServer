@@ -12,6 +12,7 @@ class CommandFlow
 	typedef enum FlowState
 	{
 		VERSION,
+		VERSION2,
 		END
 	} FlowState;
 	typedef std::unique_ptr<ICommand> CommandPtr;

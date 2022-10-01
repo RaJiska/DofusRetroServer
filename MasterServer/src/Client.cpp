@@ -24,7 +24,7 @@ void Client::start()
 
 void Client::startRead()
 {
-	boost::asio::post([this]() {
+	boost::asio::post(this->ioService, [this]() {
 		boost::asio::async_read(this->socket,
 			boost::asio::buffer(&this->buffer[0], Client::BUFFER_SIZE),
 			boost::asio::transfer_at_least(1),
@@ -40,7 +40,7 @@ void Client::startRead()
 
 void Client::end()
 {
-	boost::asio::post([this]() {
+	boost::asio::post(this->ioService, [this]() {
 		spdlog::info("Client disconnected with ID " + std::to_string(this->id) + " (" +
 			this->socket.remote_endpoint().address().to_string() + ":" +
 			std::to_string(this->socket.remote_endpoint().port()) + ")"
@@ -68,10 +68,10 @@ void Client::handleRead(const boost::system::error_code &error, std::size_t len)
 		this->end();
 }
 
-void Client::sendMessage(const std::string &message)
+void Client::sendMessage(const NetworkMessage &message)
 {
     bool isWriteInProgress = !this->messages.empty();
-    this->messages.push_back(message);
+    this->messages.push(message);
     if (!isWriteInProgress)
     {
       this->startWrite();
@@ -80,9 +80,9 @@ void Client::sendMessage(const std::string &message)
 
 void Client::startWrite()
 {
-	boost::asio::post([this]() {
+	boost::asio::post(this->ioService, [this]() {
 		boost::asio::async_write(this->socket,
-			boost::asio::buffer(this->messages.front(), this->messages.front().size()),
+			boost::asio::buffer(this->messages.front().getMessage(), this->messages.front().getMessage().size()),
 			boost::bind(
 				&Client::handleWrite,
 				this,
@@ -97,13 +97,13 @@ void Client::handleWrite(const boost::system::error_code &error, std::size_t len
 {
 	if (!error && len > 0) {
 		spdlog::info("Sent Msg to ID {0}: {1} bytes", this->id, len);
-		this->messages.pop_front();
+		this->messages.pop();
 		if (!this->messages.empty()) {
 			startWrite();
 		}
 	} else {
-		spdlog::error("Error sending message to {0}", this->id);
-		this->end();
+		spdlog::error("Error sending message to {0}: {1}", this->id, error.message());
+		//this->end();
 	}
 }
 
@@ -113,6 +113,14 @@ bool Client::processCommand()
 	auto commandState = this->currentCommand->getCommandState();
 
 	while (commandState == ICommand::CommandState::MESSAGES_TO_DISPATCH) {
+		std::queue<NetworkMessage> msgs = this->currentCommand->getDispatchList();
+		//this->sendMessage(msgs.front());
+		// while (!msgs.empty()) {
+		// 	//this->messages.push(msgs.front());
+		// 	this->sendMessage(msgs.front());
+		// 	msgs.pop();
+		// }
+		// this->startWrite();
 		// Process NetworkMessage
 		commandState = this->currentCommand->advanceStep();
 		actionPerformed = true;

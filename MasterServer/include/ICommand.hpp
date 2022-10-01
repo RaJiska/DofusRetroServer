@@ -3,6 +3,8 @@
 #include "NetworkMessage.hpp"
 #include "Exceptions/CommandException.hpp"
 
+#include <queue>
+
 class ICommand
 {
 	public:
@@ -20,4 +22,5 @@ class ICommand
 	virtual bool commandComplete(void) const noexcept = 0;
 
 	virtual CommandState getCommandState(void) const noexcept = 0;
+	virtual std::queue<NetworkMessage> &getDispatchList(void) noexcept = 0;
 };

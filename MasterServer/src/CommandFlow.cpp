@@ -28,6 +28,7 @@ CommandFlow::FlowState CommandFlow::getFlowState() const noexcept
 void CommandFlow::createClassMap(void)
 {
 	this->commandMap[CommandFlow::VERSION] = std::bind(&CommandFlow::createCommand<Command::Version>, this);
+	this->commandMap[CommandFlow::VERSION2] = std::bind(&CommandFlow::createCommand<Command::Version>, this);
 }
 
 template <typename T>

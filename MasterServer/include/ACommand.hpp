@@ -4,7 +4,6 @@
 
 #include <unordered_map>
 #include <functional>
-#include <queue>
 
 class ACommand : public ICommand
 {
@@ -12,7 +11,8 @@ class ACommand : public ICommand
 	ACommand(void);
 	virtual ~ACommand() = default;
 
-	virtual ICommand::CommandState getCommandState(void) const noexcept;
+	ICommand::CommandState getCommandState(void) const noexcept;
+	std::queue<NetworkMessage> &getDispatchList(void) noexcept;
 
 	protected:
 	ICommand::CommandState commandState = ICommand::CommandState::WAITING_FOR_INPUT;
