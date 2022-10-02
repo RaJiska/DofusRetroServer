@@ -17,9 +17,12 @@ void Client::start()
 		this->socket.remote_endpoint().address().to_string() + ":" +
 		std::to_string(this->socket.remote_endpoint().port()) + ")"
 	);
-	if (this->processCommand() && this->updateCommandFlow() != CommandFlow::FlowState::END) {
-		this->startRead();
+	while (this->processCommand()) {
+		if (this->updateCommandFlow() == CommandFlow::FlowState::END) {
+			return;
+		}
 	}
+	this->startRead();
 }
 
 void Client::startRead()
@@ -59,10 +62,13 @@ void Client::handleRead(const boost::system::error_code &error, std::size_t len)
 	if (!error && len > 0) {
 		spdlog::info("Received Msg from ID {0}: {1} bytes", this->id, len);
 
-		// Do Something
-		if (this->processCommand() && this->updateCommandFlow() != CommandFlow::FlowState::END) {
-			this->startRead();
+		while (this->processCommand()) {
+			if (this->updateCommandFlow() == CommandFlow::FlowState::END) {
+				this->end();
+				return;
+			}
 		}
+		this->startRead();
 	}
 	else
 		this->end();
@@ -70,27 +76,27 @@ void Client::handleRead(const boost::system::error_code &error, std::size_t len)
 
 void Client::sendMessage(const NetworkMessage &message)
 {
-    bool isWriteInProgress = !this->messages.empty();
-    this->messages.push(message);
-    if (!isWriteInProgress)
-    {
-      this->startWrite();
-    }
+	bool isWriteInProgress = !this->messages.empty();
+	this->messages.push(message);
+	if (!isWriteInProgress) {
+		this->startWrite();
+	}
 }
 
 void Client::startWrite()
 {
-	boost::asio::post(this->ioService, [this]() {
-		boost::asio::async_write(this->socket,
-			boost::asio::buffer(this->messages.front().getMessage(), this->messages.front().getMessage().size()),
-			boost::bind(
-				&Client::handleWrite,
-				this,
-				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred
-			)
-		);
-	});
+	boost::asio::async_write(this->socket,
+		boost::asio::buffer(
+			this->messages.front().getMessage(), 
+			this->messages.front().getMessage().size()
+		),
+		boost::bind(
+			&Client::handleWrite,
+			this,
+			boost::asio::placeholders::error,
+			boost::asio::placeholders::bytes_transferred
+		)
+	);
 }
 
 void Client::handleWrite(const boost::system::error_code &error, std::size_t len)
@@ -103,7 +109,7 @@ void Client::handleWrite(const boost::system::error_code &error, std::size_t len
 		}
 	} else {
 		spdlog::error("Error sending message to {0}: {1}", this->id, error.message());
-		//this->end();
+		this->end();
 	}
 }
 
@@ -114,14 +120,10 @@ bool Client::processCommand()
 
 	while (commandState == ICommand::CommandState::MESSAGES_TO_DISPATCH) {
 		std::queue<NetworkMessage> msgs = this->currentCommand->getDispatchList();
-		//this->sendMessage(msgs.front());
-		// while (!msgs.empty()) {
-		// 	//this->messages.push(msgs.front());
-		// 	this->sendMessage(msgs.front());
-		// 	msgs.pop();
-		// }
-		// this->startWrite();
-		// Process NetworkMessage
+		while (!msgs.empty()) {
+			this->sendMessage(msgs.front());
+			msgs.pop();
+		}
 		commandState = this->currentCommand->advanceStep();
 		actionPerformed = true;
 	}

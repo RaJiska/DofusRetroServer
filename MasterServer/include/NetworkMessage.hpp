@@ -12,11 +12,12 @@ class NetworkMessage
 	} Target;
 
 	NetworkMessage(Target target, const std::string &message);
+	virtual ~NetworkMessage() = default;
 
 	Target getTarget(void) const noexcept;
 	const std::string &getMessage() const noexcept;
 
 	private:
 	Target target;
-	const std::string &message;
+	const std::string message;
 };

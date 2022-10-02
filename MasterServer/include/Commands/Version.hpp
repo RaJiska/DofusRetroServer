@@ -11,7 +11,6 @@ namespace Command {
 
 		void processMessage(const NetworkMessage &message);
 		ICommand::CommandState advanceStep(void) noexcept;
-		bool commandComplete(void) const noexcept;
 
 		private:
 		ICommand::CommandState handleSendHc();

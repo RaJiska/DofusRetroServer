@@ -18,12 +18,6 @@ ICommand::CommandState Command::Version::advanceStep(void) noexcept
 	return this->commandState;
 }
 
-bool Command::Version::commandComplete(void) const noexcept
-{
-	return true; // TODO: Placeholder
-	//return this->state == Command::Version::MessageState::END;
-}
-
 void Command::Version::setNextStep(void) noexcept
 {
 	this->commandState = ICommand::CommandState::END;
