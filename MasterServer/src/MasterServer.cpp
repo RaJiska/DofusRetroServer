@@ -16,7 +16,7 @@ MasterServer::MasterServer(boost::asio::io_service &ioService, std::uint16_t por
 void MasterServer::startAccept()
 {
 	static unsigned long long int id = 0;
-	Client *client = new Client(id++, this->ioService);
+	Client *client = new Client(id++, this->ioService, this->backend);
 
 	this->acceptor.async_accept(client->getSocket(), boost::bind(
 		&MasterServer::handleAccept,

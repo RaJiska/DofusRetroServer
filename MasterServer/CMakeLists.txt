@@ -14,12 +14,24 @@ SET(LIBRARY_OUTPUT_PATH ${BIN_DIR})
 SET (HDRS
 	"${INCLUDE_DIR}/MasterServer.hpp"
 	"${INCLUDE_DIR}/Client.hpp"
+	"${INCLUDE_DIR}/NetworkMessage.hpp"
+	"${INCLUDE_DIR}/CommandFlow.hpp"
+	"${INCLUDE_DIR}/Backend.hpp"
+	"${INCLUDE_DIR}/ICommand.hpp"
+	"${INCLUDE_DIR}/ACommand.hpp"
+	"${INCLUDE_DIR}/Commands/Version.hpp"
+	"${INCLUDE_DIR}/Exceptions/CommandException.hpp"
 )
 
 SET (SRCS
 	"${SOURCE_DIR}/main.cpp"
 	"${SOURCE_DIR}/MasterServer.cpp"
 	"${SOURCE_DIR}/Client.cpp"
+	"${SOURCE_DIR}/NetworkMessage.cpp"
+	"${SOURCE_DIR}/CommandFlow.cpp"
+	"${SOURCE_DIR}/Backend.cpp"
+	"${SOURCE_DIR}/ACommand.cpp"
+	"${SOURCE_DIR}/Commands/Version.cpp"
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/include")
@@ -35,7 +47,7 @@ IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clan
 		-Wno-unused-variable -fno-stack-protector"
 	)
 	IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG -g3")
 	ENDIF()
 ENDIF()
 

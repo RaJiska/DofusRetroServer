@@ -1,0 +1,23 @@
+#pragma once
+
+#include "ICommand.hpp"
+
+#include <unordered_map>
+#include <functional>
+
+class ACommand : public ICommand
+{
+	public:
+	ACommand(void);
+	virtual ~ACommand() = default;
+
+	ICommand::CommandState getCommandState(void) const noexcept;
+	std::queue<NetworkMessage> &getDispatchList(void) noexcept;
+
+	protected:
+	ICommand::CommandState commandState = ICommand::CommandState::WAITING_FOR_INPUT;
+	std::queue<NetworkMessage> dispatchList;
+
+	private:
+	virtual void setNextStep(void) noexcept = 0;
+};
