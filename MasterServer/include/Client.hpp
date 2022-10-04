@@ -6,26 +6,30 @@
 
 #include "CommandFlow.hpp"
 #include "Backend.hpp"
+#include "MasterServer.hpp"
+
+class MasterServer;
 
 class Client
 {
 	public:
-	Client(unsigned long long int id, boost::asio::io_service &ioService, Backend &backend);
+	Client(unsigned long long int id, boost::asio::io_service &ioService, Backend &backend, MasterServer &server);
 	virtual ~Client() = default;
 
 	virtual void start();
 	virtual void end();
 
 	virtual boost::asio::ip::tcp::socket &getSocket() noexcept;
+	unsigned long long int getId() noexcept;
+	void startRead();
+	ICommand &getCurrentCommand() noexcept;
+	void setCurrentCommand(CommandFlow::CommandPtr command) noexcept;
+	void sendMessage(const NetworkMessage &message);
+	CommandFlow &getCommandFlow() noexcept;
 
 	private:
-	void startRead();
-	void handleRead(const boost::system::error_code &error, std::size_t len);
-	void sendMessage(const NetworkMessage &message);
 	void startWrite();
 	void handleWrite(const boost::system::error_code &error, std::size_t len);
-	bool processCommand();
-	CommandFlow::FlowState updateCommandFlow(bool force = false);
 
 	static const unsigned int BUFFER_SIZE = 256;
 
@@ -33,8 +37,8 @@ class Client
 	boost::asio::io_service &ioService;
 	boost::asio::ip::tcp::socket socket;
 	Backend &backend;
-	unsigned char buffer[Client::BUFFER_SIZE - 1];
 	std::queue<NetworkMessage> messages;
 	CommandFlow commandFlow;
 	std::unique_ptr<ICommand> currentCommand = commandFlow.retrieveCommand();
+	MasterServer &masterServer;
 };
