@@ -10,11 +10,8 @@ namespace Command {
 		~Version() = default;
 
 		void processMessage(const NetworkMessage &message);
-		ICommand::CommandState advanceStep(void) noexcept;
 
-		private:
-		ICommand::CommandState handleSendHc();
-
-		virtual void setNextStep(void) noexcept;
+		protected:
+		ICommand::CommandState adjustStepAfterDispatch(void);
 	};
 }

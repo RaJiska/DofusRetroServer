@@ -15,11 +15,17 @@ class ICommand
 		END
 	} CommandState;
 
+	typedef enum ExitStatus {
+		OK,
+		ERROR,
+		FATAL
+	} ExitStatus;
+
 	virtual ~ICommand() {}
 
 	virtual void processMessage(const NetworkMessage &message) = 0;
-	virtual CommandState advanceStep(void) = 0;
+	virtual std::queue<NetworkMessage> consumeDispatchList(void) = 0;
 
 	virtual CommandState getCommandState(void) const noexcept = 0;
-	virtual std::queue<NetworkMessage> &getDispatchList(void) noexcept = 0;
+	virtual ExitStatus getExitStatus(void) const noexcept = 0;
 };

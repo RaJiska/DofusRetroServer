@@ -20,6 +20,7 @@ SET (HDRS
 	"${INCLUDE_DIR}/ICommand.hpp"
 	"${INCLUDE_DIR}/ACommand.hpp"
 	"${INCLUDE_DIR}/Commands/Version.hpp"
+	"${INCLUDE_DIR}/Commands/Account.hpp"
 	"${INCLUDE_DIR}/Exceptions/CommandException.hpp"
 )
 
@@ -32,6 +33,7 @@ SET (SRCS
 	"${SOURCE_DIR}/Backend.cpp"
 	"${SOURCE_DIR}/ACommand.cpp"
 	"${SOURCE_DIR}/Commands/Version.cpp"
+	"${SOURCE_DIR}/Commands/Account.cpp"
 )
 
 include_directories("${PROJECT_SOURCE_DIR}/include")

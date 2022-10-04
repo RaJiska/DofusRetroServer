@@ -29,7 +29,7 @@ void Client::startRead()
 {
 	boost::asio::post(this->ioService, [this]() {
 		boost::asio::async_read(this->socket,
-			boost::asio::buffer(&this->buffer[0], Client::BUFFER_SIZE),
+			boost::asio::buffer(&this->buffer[0], Client::BUFFER_SIZE - 1),
 			boost::asio::transfer_at_least(1),
 			boost::bind(
 				&Client::handleRead,
@@ -60,18 +60,18 @@ boost::asio::ip::tcp::socket &Client::getSocket() noexcept
 void Client::handleRead(const boost::system::error_code &error, std::size_t len)
 {
 	if (!error && len > 0) {
-		spdlog::info("Received Msg from ID {0}: {1} bytes", this->id, len);
+		NetworkMessage msg(NetworkMessage::Target::PEER, reinterpret_cast<const char *>(&this->buffer[0]), len);
 
+		spdlog::debug("Received Msg from ID {0}: '{1}' ({2} bytes)", this->id, msg.getMessage(), len);
+
+		this->currentCommand->processMessage(msg);
 		while (this->processCommand()) {
 			if (this->updateCommandFlow() == CommandFlow::FlowState::END) {
-				this->end();
 				return;
 			}
 		}
 		this->startRead();
 	}
-	else
-		this->end();
 }
 
 void Client::sendMessage(const NetworkMessage &message)
@@ -119,12 +119,12 @@ bool Client::processCommand()
 	auto commandState = this->currentCommand->getCommandState();
 
 	while (commandState == ICommand::CommandState::MESSAGES_TO_DISPATCH) {
-		std::queue<NetworkMessage> msgs = this->currentCommand->getDispatchList();
+		std::queue<NetworkMessage> msgs = this->currentCommand->consumeDispatchList();
 		while (!msgs.empty()) {
 			this->sendMessage(msgs.front());
 			msgs.pop();
 		}
-		commandState = this->currentCommand->advanceStep();
+		commandState = this->currentCommand->getCommandState();
 		actionPerformed = true;
 	}
 	if (commandState == ICommand::CommandState::END) {
@@ -138,7 +138,12 @@ CommandFlow::FlowState Client::updateCommandFlow(bool force)
 	CommandFlow::FlowState flowState = this->commandFlow.getFlowState();
 
 	if (force || this->currentCommand->getCommandState() == ICommand::CommandState::END) {
-		flowState = this->commandFlow.advanceFlow();
+		auto previousFlowState = flowState;
+		auto exitStatus = this->currentCommand->getExitStatus();
+		if (exitStatus == ICommand::ExitStatus::ERROR || exitStatus == ICommand::ExitStatus::FATAL)
+			spdlog::debug("Client {0} had their command {1} exited in error with {2}", this->id, flowState, exitStatus);
+		flowState = this->commandFlow.advanceFlow(exitStatus);
+		spdlog::debug("Client {0} advanced command flow from {1} to {2}", this->id, previousFlowState, this->commandFlow.getFlowState());
 		if (flowState != CommandFlow::FlowState::END) {
 			this->currentCommand = this->commandFlow.retrieveCommand();
 		}
