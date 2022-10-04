@@ -11,13 +11,25 @@ class ACommand : public ICommand
 	ACommand(void);
 	virtual ~ACommand() = default;
 
+	std::queue<NetworkMessage> consumeDispatchList(void);
+
 	ICommand::CommandState getCommandState(void) const noexcept;
-	std::queue<NetworkMessage> &getDispatchList(void) noexcept;
+	ICommand::ExitStatus getExitStatus(void) const noexcept;
 
 	protected:
-	ICommand::CommandState commandState = ICommand::CommandState::WAITING_FOR_INPUT;
-	std::queue<NetworkMessage> dispatchList;
+	typedef enum DispatchFlag {
+		MSG,
+		ERROR,
+		FATAL
+	} DispatchFlag;
 
-	private:
-	virtual void setNextStep(void) noexcept = 0;
+	void pushMessagetoDispatchList(const NetworkMessage &message, DispatchFlag flag = DispatchFlag::MSG);
+	virtual ICommand::CommandState adjustStepAfterDispatch() = 0;
+	ICommand::CommandState handleEnd(const NetworkMessage &msg) const;
+
+	ICommand::CommandState commandState = ICommand::CommandState::WAITING_FOR_INPUT;
+	ICommand::ExitStatus exitStatus = ICommand::ExitStatus::OK;
+	std::queue<NetworkMessage> dispatchList;
+	DispatchFlag dispatchFlag = DispatchFlag::MSG;
+
 };

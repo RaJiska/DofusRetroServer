@@ -12,7 +12,7 @@ class CommandFlow
 	typedef enum FlowState
 	{
 		VERSION,
-		VERSION2,
+		ACCOUNT,
 		END
 	} FlowState;
 	typedef std::unique_ptr<ICommand> CommandPtr;
@@ -22,7 +22,7 @@ class CommandFlow
 	virtual ~CommandFlow() = default;
 
 	CommandPtr retrieveCommand();
-	FlowState advanceFlow();
+	FlowState advanceFlow(ICommand::ExitStatus lastCommandStatus = ICommand::ExitStatus::OK);
 
 	FlowState getFlowState() const noexcept;
 

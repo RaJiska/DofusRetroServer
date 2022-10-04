@@ -12,6 +12,7 @@ class NetworkMessage
 	} Target;
 
 	NetworkMessage(Target target, const std::string &message);
+	NetworkMessage(Target target, const char *message, std::size_t len);
 	virtual ~NetworkMessage() = default;
 
 	Target getTarget(void) const noexcept;

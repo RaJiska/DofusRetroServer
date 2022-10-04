@@ -6,6 +6,12 @@ NetworkMessage::NetworkMessage(
 {
 }
 
+NetworkMessage::NetworkMessage(
+	NetworkMessage::Target target, const char *message, std::size_t len)
+	: target(target), message(message, len)
+{
+}
+
 NetworkMessage::Target NetworkMessage::getTarget(void) const noexcept
 {
 	return this->target;
