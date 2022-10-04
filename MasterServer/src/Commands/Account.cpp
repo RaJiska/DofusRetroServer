@@ -12,6 +12,10 @@ Command::Account::Account(void) : ACommand()
 		ICommand::CommandState::WAITING_FOR_INPUT,
 		std::bind(&Command::Account::handleLogin, this, std::placeholders::_1)
 	);
+	this->stepMap[Account::Step::AF] = std::make_pair(
+		ICommand::CommandState::WAITING_FOR_INPUT,
+		std::bind(&Command::Account::handleAf, this, std::placeholders::_1)
+	);
 	this->stepMap[Account::Step::END] = std::make_pair(
 		ICommand::CommandState::END,
 		std::bind(&Command::Account::handleEnd, this, std::placeholders::_1)
@@ -23,7 +27,7 @@ void Command::Account::processMessage(const NetworkMessage &message)
 {
 	if (this->commandState != ICommand::CommandState::WAITING_FOR_INPUT)
 		throw CommandException("Command not expecting an input");
-	this->stepMap[Account::Step::VERSION].second(message);
+	this->stepMap[this->currentStep].second(message);
 }
 
 ICommand::CommandState Command::Account::adjustStepAfterDispatch(void)
@@ -47,7 +51,7 @@ ICommand::CommandState Command::Account::adjustStepAfterDispatch(void)
 ICommand::CommandState Command::Account::handleVersion(const NetworkMessage &msg)
 {
 	spdlog::debug("Command: Account: Received version: {}", msg.getMessage());
-	if (true) {
+	if (false) {
 		// If all good
 		this->currentStep = static_cast<Command::Account::Step>(static_cast<int>(this->currentStep) + 1);
 		this->commandState = this->stepMap[this->currentStep].first;
@@ -69,7 +73,22 @@ ICommand::CommandState Command::Account::handleLogin(const NetworkMessage &msg)
 		this->commandState = this->stepMap[this->currentStep].first;
 	}
 	else {
-		NetworkMessage error(NetworkMessage::Target::PEER, "Alef");
+		NetworkMessage error(NetworkMessage::Target::PEER, NetworkMessage::ERROR_WRONG_PASS);
+		this->pushMessagetoDispatchList(error, DispatchFlag::FATAL);
+		this->commandState = ICommand::CommandState::MESSAGES_TO_DISPATCH;
+	}
+	return this->commandState;
+}
+
+ICommand::CommandState Command::Account::handleAf(const NetworkMessage &msg)
+{
+	spdlog::debug("Command: Account: Received Af: {}", msg.getMessage());
+	if (msg.getMessage() == "Af\n") {
+		this->currentStep = static_cast<Command::Account::Step>(static_cast<int>(this->currentStep) + 1);
+		this->commandState = this->stepMap[this->currentStep].first;
+	}
+	else {
+		NetworkMessage error(NetworkMessage::Target::PEER, NetworkMessage::ERROR_UNFINISHED_CONNECTION);
 		this->pushMessagetoDispatchList(error, DispatchFlag::FATAL);
 		this->commandState = ICommand::CommandState::MESSAGES_TO_DISPATCH;
 	}

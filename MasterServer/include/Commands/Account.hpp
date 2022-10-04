@@ -18,11 +18,13 @@ namespace Command {
 		typedef enum Step {
 			VERSION,
 			LOGIN,
+			AF,
 			END
 		} Step;
 
 		ICommand::CommandState handleVersion(const NetworkMessage &msg);
 		ICommand::CommandState handleLogin(const NetworkMessage &msg);
+		ICommand::CommandState handleAf(const NetworkMessage &msg);
 
 		Step currentStep = static_cast<Step>(0);
 		std::unordered_map<Step, std::pair<

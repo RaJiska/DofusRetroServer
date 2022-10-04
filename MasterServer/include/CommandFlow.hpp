@@ -15,6 +15,7 @@ class CommandFlow
 		ACCOUNT,
 		END
 	} FlowState;
+
 	typedef std::unique_ptr<ICommand> CommandPtr;
 
 
