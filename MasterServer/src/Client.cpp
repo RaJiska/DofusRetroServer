@@ -5,8 +5,8 @@
 
 #include "spdlog/spdlog.h"
 
-Client::Client(unsigned long long int id, boost::asio::io_service &ioService, Backend &backend) :
-	id(id), ioService(ioService), socket(ioService), backend(backend)
+Client::Client(unsigned long long int id, boost::asio::io_service &ioService, Backend &backend, MasterServer &server) :
+	id(id), ioService(ioService), socket(ioService), backend(backend), masterServer(server)
 {
 
 }
@@ -17,25 +17,28 @@ void Client::start()
 		this->socket.remote_endpoint().address().to_string() + ":" +
 		std::to_string(this->socket.remote_endpoint().port()) + ")"
 	);
-	while (this->processCommand()) {
-		if (this->updateCommandFlow() == CommandFlow::FlowState::END) {
-			return;
-		}
-	}
+	// while (this->processCommand()) {
+	// 	if (this->updateCommandFlow() == CommandFlow::FlowState::END) {
+	// 		return;
+	// 	}
+	// }
 	this->startRead();
 }
 
 void Client::startRead()
 {
+	static unsigned char buffer[Client::BUFFER_SIZE - 1];
 	boost::asio::post(this->ioService, [this]() {
 		boost::asio::async_read(this->socket,
-			boost::asio::buffer(&this->buffer[0], Client::BUFFER_SIZE - 1),
+			boost::asio::buffer(buffer, Client::BUFFER_SIZE - 1),
 			boost::asio::transfer_at_least(1),
 			boost::bind(
-				&Client::handleRead,
-				this,
+				&MasterServer::handleRead,
+				&this->masterServer,
 				boost::asio::placeholders::error,
-				boost::asio::placeholders::bytes_transferred
+				boost::asio::placeholders::bytes_transferred,
+				this,
+				buffer
 			)
 		);
 	});
@@ -55,23 +58,6 @@ void Client::end()
 boost::asio::ip::tcp::socket &Client::getSocket() noexcept
 {
 	return this->socket;
-}
-
-void Client::handleRead(const boost::system::error_code &error, std::size_t len)
-{
-	if (!error && len > 0) {
-		NetworkMessage msg(NetworkMessage::Target::PEER, reinterpret_cast<const char *>(&this->buffer[0]), len);
-
-		spdlog::debug("Received Msg from ID {0}: '{1}' ({2} bytes)", this->id, msg.getMessage(), len);
-
-		this->currentCommand->processMessage(msg);
-		while (this->processCommand()) {
-			if (this->updateCommandFlow() == CommandFlow::FlowState::END) {
-				return;
-			}
-		}
-		this->startRead();
-	}
 }
 
 void Client::sendMessage(const NetworkMessage &message)
@@ -113,44 +99,23 @@ void Client::handleWrite(const boost::system::error_code &error, std::size_t len
 	}
 }
 
-bool Client::processCommand()
+unsigned long long int Client::getId() noexcept
 {
-	bool actionPerformed = false;
-	auto commandState = this->currentCommand->getCommandState();
-
-	while (commandState == ICommand::CommandState::MESSAGES_TO_DISPATCH) {
-		std::queue<NetworkMessage> msgs = this->currentCommand->consumeDispatchList();
-		while (!msgs.empty()) {
-			this->sendMessage(msgs.front());
-			msgs.pop();
-		}
-		commandState = this->currentCommand->getCommandState();
-		actionPerformed = true;
-	}
-	if (commandState == ICommand::CommandState::END) {
-		actionPerformed = true;
-	}
-	return actionPerformed;
+	return this->id;
 }
 
-CommandFlow::FlowState Client::updateCommandFlow(bool force)
-{
-	CommandFlow::FlowState flowState = this->commandFlow.getFlowState();
 
-	if (force || this->currentCommand->getCommandState() == ICommand::CommandState::END) {
-		auto previousFlowState = flowState;
-		auto exitStatus = this->currentCommand->getExitStatus();
-		if (exitStatus == ICommand::ExitStatus::ERROR || exitStatus == ICommand::ExitStatus::FATAL)
-			spdlog::debug("Client {0} had their command {1} exited in error with {2}", this->id, flowState, exitStatus);
-		flowState = this->commandFlow.advanceFlow(exitStatus);
-		spdlog::debug("Client {0} advanced command flow from {1} to {2}", this->id, previousFlowState, this->commandFlow.getFlowState());
-		if (flowState != CommandFlow::FlowState::END) {
-			this->currentCommand = this->commandFlow.retrieveCommand();
-		}
-		else {
-			spdlog::debug("Client {} reached the end of their command flow", this->id);
-			this->end();
-		}
-	}
-	return flowState;
+ICommand &Client::getCurrentCommand() noexcept
+{
+	return *this->currentCommand;
+}
+
+void Client::setCurrentCommand(CommandFlow::CommandPtr command) noexcept
+{
+	this->currentCommand = std::move(command);
+}
+
+CommandFlow &Client::getCommandFlow() noexcept
+{
+	return this->commandFlow;
 }
