@@ -5,8 +5,6 @@
 #include "MasterServer.hpp"
 #include "spdlog/spdlog.h"
 
-#include "CommandFlow.hpp"
-
 int main(int argc, char * const *argv)
 {
 #ifdef DEBUG

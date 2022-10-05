@@ -4,93 +4,86 @@
 
 Command::Account::Account(void) : ACommand()
 {
-	this->stepMap[Account::Step::VERSION] = std::make_pair(
-		ICommand::CommandState::WAITING_FOR_INPUT,
-		std::bind(&Command::Account::handleVersion, this, std::placeholders::_1)
-	);
-	this->stepMap[Account::Step::LOGIN] = std::make_pair(
-		ICommand::CommandState::WAITING_FOR_INPUT,
-		std::bind(&Command::Account::handleLogin, this, std::placeholders::_1)
-	);
-	this->stepMap[Account::Step::AF] = std::make_pair(
-		ICommand::CommandState::WAITING_FOR_INPUT,
-		std::bind(&Command::Account::handleAf, this, std::placeholders::_1)
-	);
-	this->stepMap[Account::Step::END] = std::make_pair(
-		ICommand::CommandState::END,
-		std::bind(&Command::Account::handleEnd, this, std::placeholders::_1)
-	);
-	this->commandState = this->stepMap[static_cast<Account::Step>(0)].first;
+	this->stepMap[Account::Step::VERSION] = std::bind(&Command::Account::handleVersion, this, std::placeholders::_1);
+	this->stepMap[Account::Step::LOGIN] = std::bind(&Command::Account::handleLogin, this, std::placeholders::_1);
+	this->stepMap[Account::Step::AF] = std::bind(&Command::Account::handleAf, this, std::placeholders::_1);
+	// this->stepMap[Account::Step::END] = std::bind(&Command::Account::handleEnd, this, std::placeholders::_1);
 }
 
 void Command::Account::processMessage(const NetworkMessage &message)
 {
-	if (this->commandState != ICommand::CommandState::WAITING_FOR_INPUT)
-		throw CommandException("Command not expecting an input");
-	this->stepMap[this->currentStep].second(message);
+	if (this->currentStep == Command::Account::Step::END)
+		throw CommandException("Command is over and may not process messages anymore");
+	this->stepMap[this->currentStep](message);
+	this->currentStep = static_cast<Step>(static_cast<int>(this->currentStep) + 1);
 }
 
-ICommand::CommandState Command::Account::adjustStepAfterDispatch(void)
+void Command::Account::process(void)
 {
-	// Handle in case error message sent to dispatch
-	if (this->dispatchFlag == DispatchFlag::FATAL) {
-		this->exitStatus = ICommand::ExitStatus::FATAL;
-		this->commandState = ICommand::CommandState::END;
-	}
-	else if (this->dispatchFlag == DispatchFlag::ERROR) {
-		this->exitStatus = ICommand::ExitStatus::FATAL;
-		this->commandState = ICommand::CommandState::END;
+	if (this->currentStep != Command::Account::Step::END)
+		throw CommandException("Process may only be called once command is fully completed");
+	if (this->exitStatus != OK) {
+		if (this->dispatchList.empty()) {
+			NetworkMessage err(NetworkMessage::Target::PEER, NetworkMessage::ERROR_UNFINISHED_CONNECTION);
+			this->dispatchList.push(err);
+		}
 	}
 	else {
-		this->currentStep = static_cast<Command::Account::Step>(static_cast<int>(this->currentStep) + 1);
-		this->commandState = this->stepMap[this->currentStep].first;
+		// Do Stuff
 	}
-	return this->commandState;
 }
 
-ICommand::CommandState Command::Account::handleVersion(const NetworkMessage &msg)
+bool Command::Account::isOver(void) const noexcept
 {
-	spdlog::debug("Command: Account: Received version: {}", msg.getMessage());
-	if (false) {
-		// If all good
-		this->currentStep = static_cast<Command::Account::Step>(static_cast<int>(this->currentStep) + 1);
-		this->commandState = this->stepMap[this->currentStep].first;
-	}
-	else {
-		NetworkMessage error(NetworkMessage::Target::PEER, "Alef");
-		this->pushMessagetoDispatchList(error, DispatchFlag::FATAL);
-		this->commandState = ICommand::CommandState::MESSAGES_TO_DISPATCH;
-	}
-	return this->commandState;
+	return this->currentStep == Command::Account::Step::END;
 }
 
-ICommand::CommandState Command::Account::handleLogin(const NetworkMessage &msg)
+// ICommand::CommandState Command::Account::adjustStepAfterDispatch(void)
+// {
+// 	// Handle in case error message sent to dispatch
+// 	if (this->dispatchFlag == DispatchFlag::FATAL) {
+// 		this->exitStatus = ICommand::ExitStatus::FATAL;
+// 		this->commandState = ICommand::CommandState::END;
+// 	}
+// 	else if (this->dispatchFlag == DispatchFlag::ERROR) {
+// 		this->exitStatus = ICommand::ExitStatus::FATAL;
+// 		this->commandState = ICommand::CommandState::END;
+// 	}
+// 	else {
+// 		this->currentStep = static_cast<Command::Account::Step>(static_cast<int>(this->currentStep) + 1);
+// 		this->commandState = this->stepMap[this->currentStep].first;
+// 	}
+// 	return this->commandState;
+// }
+
+void Command::Account::handleVersion(const NetworkMessage &msg)
 {
-	spdlog::debug("Command: Account: Received Account: {}", msg.getMessage());
-	if (true) {
-		// If all good
-		this->currentStep = static_cast<Command::Account::Step>(static_cast<int>(this->currentStep) + 1);
-		this->commandState = this->stepMap[this->currentStep].first;
-	}
-	else {
-		NetworkMessage error(NetworkMessage::Target::PEER, NetworkMessage::ERROR_WRONG_PASS);
-		this->pushMessagetoDispatchList(error, DispatchFlag::FATAL);
-		this->commandState = ICommand::CommandState::MESSAGES_TO_DISPATCH;
-	}
-	return this->commandState;
+	spdlog::debug("Command: Account: Received Version: {}", msg.getMessage());
+	this->clientVersion = msg.getMessage();
 }
 
-ICommand::CommandState Command::Account::handleAf(const NetworkMessage &msg)
+void Command::Account::handleLogin(const NetworkMessage &msg)
 {
-	spdlog::debug("Command: Account: Received Af: {}", msg.getMessage());
-	if (msg.getMessage() == "Af\n") {
-		this->currentStep = static_cast<Command::Account::Step>(static_cast<int>(this->currentStep) + 1);
-		this->commandState = this->stepMap[this->currentStep].first;
+	const std::string smsg = msg.getMessage();
+	auto delim = smsg.find("\n#");
+
+	spdlog::debug("Command: Account: Received Login: {}", smsg);
+	if (delim > 0 && delim < smsg.size() - 2) {
+		this->clientAccount = smsg.substr(0, delim - 1);
+		this->clientPassword = smsg.substr(delim + 2);
 	}
 	else {
-		NetworkMessage error(NetworkMessage::Target::PEER, NetworkMessage::ERROR_UNFINISHED_CONNECTION);
-		this->pushMessagetoDispatchList(error, DispatchFlag::FATAL);
-		this->commandState = ICommand::CommandState::MESSAGES_TO_DISPATCH;
+		NetworkMessage err(NetworkMessage::Target::PEER, NetworkMessage::ERROR_WRONG_PASS);
+		this->dispatchList.push(err);
+		this->exitStatus = ICommand::ExitStatus::ERROR;
 	}
-	return this->commandState;
+}
+
+void Command::Account::handleAf(const NetworkMessage &msg)
+{
+	const std::string smsg = msg.getMessage();
+
+	spdlog::debug("Command: Account: Received Af: {}", smsg);
+	if (smsg != "Af\n")
+		this->exitStatus = ICommand::ExitStatus::ERROR;
 }

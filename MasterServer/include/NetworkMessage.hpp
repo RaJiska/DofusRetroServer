@@ -8,11 +8,13 @@ class NetworkMessage
 	typedef enum Target
 	{
 		PEER,
-		BROADCAST
+		BROADCAST,
+		NONE
 	} Target;
 
-	NetworkMessage(Target target, const std::string &message);
-	NetworkMessage(Target target, const char *message, std::size_t len);
+	NetworkMessage();
+	NetworkMessage(Target target, const std::string &message, bool process = false);
+	NetworkMessage(Target target, const char *message, std::size_t len, bool process = false);
 	virtual ~NetworkMessage() = default;
 
 	Target getTarget(void) const noexcept;
@@ -34,6 +36,8 @@ class NetworkMessage
 	static const std::string ERROR_NICKNAME_ALREADY_USED;
 
 	private:
-	Target target;
-	const std::string message;
+	Target target = Target::NONE;
+	std::string message = "";
+
+	void processString(void) noexcept;
 };
