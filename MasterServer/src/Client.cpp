@@ -17,20 +17,18 @@ void Client::start()
 		this->socket.remote_endpoint().address().to_string() + ":" +
 		std::to_string(this->socket.remote_endpoint().port()) + ")"
 	);
-	// while (this->processCommand()) {
-	// 	if (this->updateCommandFlow() == CommandFlow::FlowState::END) {
-	// 		return;
-	// 	}
-	// }
+	auto msgs = this->commandFlow->process();
+	this->consumeMessages(msgs);
 	this->startRead();
 }
 
 void Client::startRead()
 {
 	static unsigned char buffer[Client::BUFFER_SIZE - 1];
+
 	boost::asio::post(this->ioService, [this]() {
 		boost::asio::async_read(this->socket,
-			boost::asio::buffer(buffer, Client::BUFFER_SIZE - 1),
+			boost::asio::buffer(&buffer[0], Client::BUFFER_SIZE - 1),
 			boost::asio::transfer_at_least(1),
 			boost::bind(
 				&MasterServer::handleRead,
@@ -38,7 +36,7 @@ void Client::startRead()
 				boost::asio::placeholders::error,
 				boost::asio::placeholders::bytes_transferred,
 				this,
-				buffer
+				&buffer[0]
 			)
 		);
 	});
@@ -55,17 +53,20 @@ void Client::end()
 	});
 }
 
-boost::asio::ip::tcp::socket &Client::getSocket() noexcept
-{
-	return this->socket;
-}
-
 void Client::sendMessage(const NetworkMessage &message)
 {
 	bool isWriteInProgress = !this->messages.empty();
 	this->messages.push(message);
 	if (!isWriteInProgress) {
 		this->startWrite();
+	}
+}
+
+void Client::consumeMessages(std::queue<NetworkMessage> &messages)
+{
+	while (!messages.empty()) {
+		this->sendMessage(messages.front());
+		messages.pop();
 	}
 }
 
@@ -99,23 +100,17 @@ void Client::handleWrite(const boost::system::error_code &error, std::size_t len
 	}
 }
 
-unsigned long long int Client::getId() noexcept
+boost::asio::ip::tcp::socket &Client::getSocket() noexcept
+{
+	return this->socket;
+}
+
+unsigned long long int Client::getId() const noexcept
 {
 	return this->id;
 }
 
-
-ICommand &Client::getCurrentCommand() noexcept
-{
-	return *this->currentCommand;
-}
-
-void Client::setCurrentCommand(CommandFlow::CommandPtr command) noexcept
-{
-	this->currentCommand = std::move(command);
-}
-
-CommandFlow &Client::getCommandFlow() noexcept
+std::shared_ptr<ICommandFlow> Client::getCommandFlow()
 {
 	return this->commandFlow;
 }

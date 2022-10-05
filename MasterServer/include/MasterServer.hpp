@@ -13,13 +13,11 @@ class MasterServer
 	public:
 	MasterServer() = default;
 	MasterServer(boost::asio::io_service &ioService, std::uint16_t port);
-	void handleRead(const boost::system::error_code &error, std::size_t len, Client *client, unsigned char[]);
+	void handleRead(const boost::system::error_code &error, std::size_t len, Client *client, unsigned char *);
 
 	private:
 	void startAccept();
 	void handleAccept(const boost::system::error_code &error, unsigned long long int id);
-	bool processCommand(Client &client);
-	CommandFlow::FlowState updateCommandFlow(Client &client, bool force = false);
 	unsigned long long int getClientById(unsigned long long int id);
 
 	boost::asio::io_service &ioService;
