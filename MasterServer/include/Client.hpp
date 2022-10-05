@@ -4,9 +4,10 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <queue>
 
-#include "CommandFlow.hpp"
 #include "Backend.hpp"
 #include "MasterServer.hpp"
+#include "NetworkMessage.hpp"
+#include "CommandFlowLogin.hpp"
 
 class MasterServer;
 
@@ -19,13 +20,13 @@ class Client
 	virtual void start();
 	virtual void end();
 
-	virtual boost::asio::ip::tcp::socket &getSocket() noexcept;
-	unsigned long long int getId() noexcept;
 	void startRead();
-	ICommand &getCurrentCommand() noexcept;
-	void setCurrentCommand(CommandFlow::CommandPtr command) noexcept;
 	void sendMessage(const NetworkMessage &message);
-	CommandFlow &getCommandFlow() noexcept;
+	void consumeMessages(std::queue<NetworkMessage> &messages);
+
+	boost::asio::ip::tcp::socket &getSocket() noexcept;
+	unsigned long long int getId() const noexcept;
+	std::shared_ptr<ICommandFlow> getCommandFlow();
 
 	private:
 	void startWrite();
@@ -37,8 +38,8 @@ class Client
 	boost::asio::io_service &ioService;
 	boost::asio::ip::tcp::socket socket;
 	Backend &backend;
-	std::queue<NetworkMessage> messages;
-	CommandFlow commandFlow;
-	std::unique_ptr<ICommand> currentCommand = commandFlow.retrieveCommand();
 	MasterServer &masterServer;
+
+	std::queue<NetworkMessage> messages;
+	std::shared_ptr<ICommandFlow> commandFlow = std::make_unique<CommandFlowLogin>();
 };

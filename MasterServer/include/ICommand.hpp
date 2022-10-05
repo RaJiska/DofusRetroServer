@@ -8,24 +8,17 @@
 class ICommand
 {
 	public:
-	typedef enum CommandState
-	{
-		WAITING_FOR_INPUT,
-		MESSAGES_TO_DISPATCH,
-		END
-	} CommandState;
-
 	typedef enum ExitStatus {
 		OK,
 		ERROR,
-		FATAL
 	} ExitStatus;
 
 	virtual ~ICommand() {}
 
 	virtual void processMessage(const NetworkMessage &message) = 0;
+	virtual void process(void) = 0;
 	virtual std::queue<NetworkMessage> consumeDispatchList(void) = 0;
+	virtual bool isOver() const noexcept = 0;
 
-	virtual CommandState getCommandState(void) const noexcept = 0;
 	virtual ExitStatus getExitStatus(void) const noexcept = 0;
 };

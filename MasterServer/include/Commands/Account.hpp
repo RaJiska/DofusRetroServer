@@ -9,26 +9,29 @@ namespace Command {
 		Account(void);
 		~Account() = default;
 
-		void processMessage(const NetworkMessage &message);
+		virtual void processMessage(const NetworkMessage &message) override;
+		void process(void) override;
+		bool isOver(void) const noexcept;
 
 		protected:
-		ICommand::CommandState adjustStepAfterDispatch(void);
 
 		private:
 		typedef enum Step {
 			VERSION,
 			LOGIN,
+			AF,
 			END
 		} Step;
 
-		ICommand::CommandState handleVersion(const NetworkMessage &msg);
-		ICommand::CommandState handleLogin(const NetworkMessage &msg);
+		void handleVersion(const NetworkMessage &msg);
+		void handleLogin(const NetworkMessage &msg);
+		void handleAf(const NetworkMessage &msg);
 
 		Step currentStep = static_cast<Step>(0);
-		std::unordered_map<Step, std::pair<
-				ICommand::CommandState,
-				std::function<ICommand::CommandState(const NetworkMessage &)>
-			>
-		> stepMap;
+		std::unordered_map<Step, std::function<void(const NetworkMessage &)>> stepMap;
+
+		std::string clientVersion = "";
+		std::string clientAccount = "";
+		std::string clientPassword = "";
 	};
 }

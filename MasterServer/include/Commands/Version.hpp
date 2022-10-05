@@ -9,9 +9,6 @@ namespace Command {
 		Version(void);
 		~Version() = default;
 
-		void processMessage(const NetworkMessage &message);
-
-		protected:
-		ICommand::CommandState adjustStepAfterDispatch(void);
+		bool isOver() const noexcept;
 	};
 }

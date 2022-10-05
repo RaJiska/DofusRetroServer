@@ -3,15 +3,10 @@
 Command::Version::Version(void) : ACommand()
 {
 	NetworkMessage msg(NetworkMessage::Target::PEER, "HCaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-	this->pushMessagetoDispatchList(msg);
+	this->dispatchList.push(msg);
 }
 
-void Command::Version::processMessage(const NetworkMessage &message)
+bool Command::Version::isOver() const noexcept
 {
-}
-
-ICommand::CommandState Command::Version::adjustStepAfterDispatch(void)
-{
-	this->commandState = ICommand::CommandState::END;
-	return this->commandState;
+	return true;
 }
