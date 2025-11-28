@@ -11,7 +11,7 @@ namespace Command {
 
 		virtual void processMessage(const NetworkMessage &message) override;
 		void process(void) override;
-		bool isOver(void) const noexcept;
+		bool isOver(void) const noexcept override;
 
 		protected:
 

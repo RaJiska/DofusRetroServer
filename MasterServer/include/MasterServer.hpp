@@ -11,8 +11,8 @@ class Client;
 class MasterServer
 {
 	public:
-	MasterServer() = default;
-	MasterServer(boost::asio::io_service &ioService, std::uint16_t port);
+	MasterServer() = delete;
+	MasterServer(boost::asio::io_context &ioContext, std::uint16_t port);
 	void handleRead(const boost::system::error_code &error, std::size_t len, Client *client, unsigned char *);
 
 	private:
@@ -20,7 +20,7 @@ class MasterServer
 	void handleAccept(const boost::system::error_code &error, unsigned long long int id);
 	unsigned long long int getClientById(unsigned long long int id);
 
-	boost::asio::io_service &ioService;
+	boost::asio::io_context &ioContext;
 	boost::asio::ip::tcp::acceptor acceptor;
 	boost::asio::ip::tcp::socket socket;
 	Backend backend;

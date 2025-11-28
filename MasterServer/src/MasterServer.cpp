@@ -2,10 +2,10 @@
 
 #include "spdlog/spdlog.h"
 
-MasterServer::MasterServer(boost::asio::io_service &ioService, std::uint16_t port) :
-	ioService(ioService),
-	acceptor(ioService, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
-	socket(ioService)
+MasterServer::MasterServer(boost::asio::io_context &ioContext, std::uint16_t port) :
+	ioContext(ioContext),
+	acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
+	socket(ioContext)
 {
 	spdlog::info("Accepting connections on port " + std::to_string(port));
 	this->startAccept();
@@ -14,7 +14,7 @@ MasterServer::MasterServer(boost::asio::io_service &ioService, std::uint16_t por
 void MasterServer::startAccept()
 {
 	static unsigned long long int id = -1;
-	std::unique_ptr<Client> client(new Client(++id, this->ioService, this->backend, *this));
+	std::unique_ptr<Client> client(new Client(++id, this->ioContext, this->backend, *this));
 	this->clients.push_back(std::move(client));
 	unsigned long long int clientIndex = getClientById(id);
 	this->acceptor.async_accept(this->clients[clientIndex]->getSocket(), boost::bind(
@@ -62,4 +62,5 @@ unsigned long long int MasterServer::getClientById(unsigned long long int id)
 			return i;
 		}
     }
+	return 0;
 }
