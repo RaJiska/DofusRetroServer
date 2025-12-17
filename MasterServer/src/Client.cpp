@@ -5,8 +5,8 @@
 
 #include "spdlog/spdlog.h"
 
-Client::Client(unsigned long long int id, boost::asio::io_service &ioService, Backend &backend, MasterServer &server) :
-	id(id), ioService(ioService), socket(ioService), backend(backend), masterServer(server)
+Client::Client(unsigned long long int id, boost::asio::io_context &ioContext, Backend &backend, MasterServer &server) :
+	id(id), ioContext(ioContext), socket(ioContext), backend(backend), masterServer(server)
 {
 
 }
@@ -26,7 +26,7 @@ void Client::startRead()
 {
 	static unsigned char buffer[Client::BUFFER_SIZE - 1];
 
-	boost::asio::post(this->ioService, [this]() {
+	boost::asio::post(this->ioContext, [this]() {
 		boost::asio::async_read(this->socket,
 			boost::asio::buffer(&buffer[0], Client::BUFFER_SIZE - 1),
 			boost::asio::transfer_at_least(1),
@@ -44,7 +44,7 @@ void Client::startRead()
 
 void Client::end()
 {
-	boost::asio::post(this->ioService, [this]() {
+	boost::asio::post(this->ioContext, [this]() {
 		spdlog::info("Client disconnected with ID " + std::to_string(this->id) + " (" +
 			this->socket.remote_endpoint().address().to_string() + ":" +
 			std::to_string(this->socket.remote_endpoint().port()) + ")"

@@ -14,7 +14,8 @@ class MasterServer;
 class Client
 {
 	public:
-	Client(unsigned long long int id, boost::asio::io_service &ioService, Backend &backend, MasterServer &server);
+	Client(unsigned long long int id, boost::asio::io_context &ioContext
+, Backend &backend, MasterServer &server);
 	virtual ~Client() = default;
 
 	virtual void start();
@@ -35,7 +36,7 @@ class Client
 	static const unsigned int BUFFER_SIZE = 256;
 
 	unsigned long long int id;
-	boost::asio::io_service &ioService;
+	boost::asio::io_context &ioContext;
 	boost::asio::ip::tcp::socket socket;
 	Backend &backend;
 	MasterServer &masterServer;

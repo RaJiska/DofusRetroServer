@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.6)
 project (MasterService)
 
 ### Main Variables
@@ -42,7 +42,7 @@ SET (SRCS
 include_directories("${PROJECT_SOURCE_DIR}/include")
 
 ### Packages
-find_package(Boost)
+find_package(Boost REQUIRED)
 
 ### CFlags for G++ or Clang
 IF (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -60,7 +60,7 @@ ENDIF()
 add_subdirectory(lib/spdlog)
 
 add_executable(${BINARY_NAME} ${HDRS} ${SRCS})
-target_link_libraries(${BINARY_NAME} spdlog)
+target_link_libraries(${BINARY_NAME} spdlog Boost::boost)
 
 set_target_properties(${BINARY_NAME} PROPERTIES
 	CXX_STANDARD 20
